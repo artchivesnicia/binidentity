@@ -49,6 +49,7 @@
             position: relative;
             width: 900px;  /* Locked to Horizontal Base Width */
             height: 540px; /* Locked to Horizontal Base Height */
+            flex-shrink: 0; /* STOPS MOBILE BROWSERS FROM SQUISHING IT */
             box-shadow: 0 25px 50px rgba(0,0,0,0.3);
             background-color: #fff;
             border-radius: 15px; 
@@ -171,6 +172,8 @@
             margin-top: 30px;
             padding: 20px 40px;
             border-radius: 30px;
+            
+            /* Glass Effect */
             background: rgba(255, 255, 255, 0.25);
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
@@ -189,7 +192,7 @@
             font-size: 14px;
             font-weight: bold;
             color: #222;
-            text-shadow: 0 1px 3px rgba(255,255,255,0.8);
+            text-shadow: 0 1px 3px rgba(255,255,255,0.8); /* Ensures text is readable on dark backgrounds */
             display: flex;
             align-items: center;
             gap: 8px;
@@ -235,11 +238,11 @@
             box-shadow: 0 10px 25px rgba(252, 163, 183, 0.5);
         }
 
-        /* Modal Styles */
+        /* Modal Styles - Glassmorphism Update */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.4); 
+            background: rgba(0,0,0,0.4); /* Darkened slightly to make the glass pop */
             display: none; 
             align-items: center;
             justify-content: center;
@@ -249,11 +252,13 @@
         }
 
         .modal-content {
+            /* Glass Effect for Modal */
             background: rgba(255, 255, 255, 0.3);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.5);
             box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+            
             padding: 30px 40px;
             border-radius: 25px;
             text-align: center;
@@ -273,15 +278,19 @@
             gap: 25px;
             justify-content: center;
             margin: 25px 0;
+            flex-wrap: wrap; /* Allows icons to wrap on extremely tiny screens */
         }
 
+        /* Glass Version Buttons */
         .version-btn {
             width: 140px;
             height: 140px;
+            /* Glass styling */
             background: rgba(255, 255, 255, 0.4);
             border: 2px solid rgba(255, 255, 255, 0.6);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
+            
             border-radius: 15px;
             cursor: pointer;
             padding: 10px;
@@ -351,10 +360,6 @@
             }
             .slider-group input[type="range"] {
                 width: 60%;
-            }
-            .version-options {
-                flex-wrap: wrap;
-                gap: 15px;
             }
             .modal-content {
                 padding: 20px;
@@ -429,23 +434,20 @@
             
             const screenWidth = window.innerWidth;
             
-            // If on mobile, make the card take up 90% of the screen width. 
-            // If on desktop (wider than 950px), keep it at exactly 900px.
+            // Make the card take up 90% of the mobile screen
             const targetWidth = screenWidth < 950 ? screenWidth * 0.9 : 900;
             
-            // Calculate the perfect scale percentage based on a 900px original width
+            // Calculate scale based on the original 900px horizontal width
             const scale = targetWidth / 900; 
             
             card.style.transform = `scale(${scale})`;
             
-            // Shrink the invisible container so it doesn't leave huge empty spaces
+            // Shrink the invisible container based on the 540px horizontal height
             container.style.height = `${540 * scale}px`;
         }
 
-        // Run scale check on page load and whenever the screen is resized
         window.addEventListener('resize', adjustScale);
         window.addEventListener('load', adjustScale);
-
 
         // --- Modal & Version Selector Logic ---
         const designModal = document.getElementById('designModal');
@@ -561,10 +563,10 @@
             // This snaps the ID back to full size so the download is HD
             idCard.classList.add('capturing');
             
-            // We use a tiny 50ms delay to let the browser process the size change
+            // 50ms delay to let the CSS snap it to full size before taking the screenshot
             setTimeout(() => {
                 html2canvas(idCard, {
-                    scale: 2, // 2x scale makes the download super crisp
+                    scale: 2, 
                     backgroundColor: null,
                     allowTaint: true,
                     useCORS: true
