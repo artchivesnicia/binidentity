@@ -117,14 +117,12 @@
             z-index: 1;
         }
 
-        /* Default Input Fields (Black Text) */
+        /* Default Input Fields */
         .overlay-input {
             position: absolute;
             z-index: 3;
-            /* Using Segoe UI, falling back to Apple system font on iOS/Mac */
-            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; 
-            font-weight: 500;
-            font-size: 24px; 
+            font-family: 'Caveat', 'Segoe Script', cursive !important; 
+            font-size: 28px; 
             color: #111;
             text-align: center;
             background: transparent;
@@ -133,6 +131,11 @@
             transform: translate(-50%, -50%); 
             padding: 5px;
             transition: background 0.2s, color 0.3s;
+            
+            -webkit-appearance: none; 
+            -moz-appearance: none;
+            appearance: none;
+            border-radius: 0; 
         }
 
         .overlay-input::placeholder {
