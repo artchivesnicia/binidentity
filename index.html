@@ -42,20 +42,20 @@
             justify-content: center;
             align-items: flex-start;
             margin-bottom: 20px;
-            /* Height is handled dynamically by JavaScript */
+       
         }
 
         /* ID Card Layout (Horizontal Lock) */
         .id-card-wrapper {
             position: relative;
-            width: 900px;  /* Locked to Horizontal Base Width */
-            height: 540px; /* Locked to Horizontal Base Height */
-            flex-shrink: 0; /* STOPS MOBILE BROWSERS FROM SQUISHING IT */
+            width: 900px;  
+            height: 540px; 
+            flex-shrink: 0; 
             box-shadow: 0 25px 50px rgba(0,0,0,0.3);
             background-color: #fff;
             border-radius: 15px; 
             overflow: hidden;
-            transform-origin: top center; /* Shrinks evenly toward the middle on mobile */
+            transform-origin: top center; 
             transition: transform 0.3s ease;
         }
 
@@ -146,8 +146,8 @@
 
         /* WHITE TEXT OVERRIDE (For Versions 2 & 3) */
         .id-card-wrapper.white-text .overlay-input {
-            color: #ffffff !important; /* Forces mobile browsers to respect the white color */
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.5); /* Adds a tiny shadow so white text is readable on light backgrounds */
+            color: #ffffff !important; 
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.5); 
         }
         .id-card-wrapper.white-text .overlay-input::placeholder {
             color: rgba(255,255,255,0.7) !important;
@@ -160,7 +160,6 @@
         #input-place { top: 41%; left: 78%; width: 350px; }
         #input-signature { top: 83%; left: 73.5%; width: 350px; font-size: 30px; pointer-events: none; }
 
-        /* The capturing class forces the card to full scale momentarily for HD screenshots */
         .id-card-wrapper.capturing { 
             transition: none !important; 
             transform: scale(1) !important; 
@@ -431,22 +430,18 @@
     </div>
 
     <script>
-        // --- Mobile Responsive Scaling Logic ---
         function adjustScale() {
             const container = document.getElementById('cardContainer');
             const card = document.getElementById('idCard');
             
             const screenWidth = window.innerWidth;
             
-            // Make the card take up 90% of the mobile screen
             const targetWidth = screenWidth < 950 ? screenWidth * 0.9 : 900;
             
-            // Calculate scale based on the original 900px horizontal width
             const scale = targetWidth / 900; 
             
             card.style.transform = `scale(${scale})`;
             
-            // Shrink the invisible container based on the 540px horizontal height
             container.style.height = `${540 * scale}px`;
         }
 
@@ -564,10 +559,8 @@
                 tempDivs.push({ realInput: input, fakeDiv: div, id: originalId });
             });
 
-            // This snaps the ID back to full size so the download is HD
             idCard.classList.add('capturing');
             
-            // 50ms delay to let the CSS snap it to full size before taking the screenshot
             setTimeout(() => {
                 html2canvas(idCard, {
                     scale: 2, 
@@ -580,7 +573,6 @@
                     link.href = canvas.toDataURL('image/png');
                     link.click();
                     
-                    // Return the ID back to its mobile scaled size
                     idCard.classList.remove('capturing');
 
                     tempDivs.forEach(item => {
