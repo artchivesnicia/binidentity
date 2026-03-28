@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BINIdentity</title>
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            
+            /* --- BACKGROUND SETUP --- */
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+            background-image: url('background.png');
+            background-size: cover;       
+            background-position: center;  
+            background-repeat: no-repeat; 
+            background-attachment: fixed; 
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-shadow: 2px 2px 0px #fff;
+        }
+
+        /* ID Card Layout */
+        .id-card-wrapper {
+            position: relative;
+            width: 900px;
+            height: 540px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+            background-color: #fff;
+            border-radius: 15px; 
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .template-img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            display: block;
+        }
+
+        /* Photo Masking */
+        .user-photo-container {
+            position: absolute;
+            width: 320px !important;   
+            height: 382px !important;  
+            top: 79px;      
+            left: 79px;     
+            z-index: 2; 
+            border-radius: 50%; 
+            overflow: hidden;
+            background-color: rgba(255, 255, 255, 0.2); 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 2px dashed rgba(0,0,0,0.3);
+            transition: all 0.2s;
+        }
+
+        .user-photo-container:hover {
+            background-color: rgba(255, 255, 255, 0.4);
+            border-color: rgba(0,0,0,0.6);
+        }
+
+        .upload-hint {
+            position: absolute;
+            font-family: 'Segoe UI', sans-serif;
+            font-weight: bold;
+            color: #444;
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            padding: 10px 20px;
+            border-radius: 20px;
+            pointer-events: none;
+            z-index: 3;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .user-photo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; 
+            display: none;
+            transform-origin: center center;
+            z-index: 1;
+        }
+
+        /* Default Input Fields (Black Text) */
+        .overlay-input {
+            position: absolute;
+            z-index: 3;
+            font-family: 'Segoe Script', cursive, sans-serif;
+            font-size: 24px; 
+            color: #111;
+            text-align: center;
+            background: transparent;
+            border: none;
+            outline: none;
+            transform: translate(-50%, -50%); 
+            padding: 5px;
+            transition: background 0.2s, color 0.3s;
+        }
+
+        .overlay-input::placeholder {
+            color: rgba(0,0,0,0.4);
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 16px;
+        }
+
+        /* WHITE TEXT OVERRIDE (For Versions 2 & 3) */
+        .id-card-wrapper.white-text .overlay-input {
+            color: #ffffff;
+        }
+        .id-card-wrapper.white-text .overlay-input::placeholder {
+            color: rgba(255,255,255,0.6);
+        }
+
+        /* Coordinates */
+        #input-name { top: 28%; left: 76%; width: 350px; }
+        #input-nationality { top: 34%; left: 76%; width: 350px; }
+        #input-place { top: 41%; left: 78%; width: 350px; }
+        #input-signature { top: 83%; left: 73.5%; width: 350px; font-size: 30px; pointer-events: none; }
+
+        .capturing .overlay-input { background: transparent !important; }
+        .capturing .overlay-input::placeholder { color: transparent !important; }
+        .capturing .user-photo-container { border: none !important; }
+
+        /* --- GLASSMORPHISM UI --- */
+        
+        /* Glass Toolbar */
+        .toolbar {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin-top: 30px;
+            padding: 20px 40px;
+            border-radius: 30px;
+            
+            /* Glass Effect */
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .slider-group {
+            display: none; 
+            gap: 20px;
+            align-items: center;
+        }
+        
+        .slider-group label {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 14px;
+            font-weight: bold;
+            color: #222;
+            text-shadow: 0 1px 3px rgba(255,255,255,0.8); /* Ensures text is readable on dark backgrounds */
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            color: white;
+            border: 1px solid rgba(255,255,255,0.5);
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: transform 0.2s, background 0.3s, box-shadow 0.3s;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+
+        .btn-download {
+            background-color: #049c9e; 
+            box-shadow: 0 8px 20px rgba(97, 192, 213, 0.3);
+        }
+        .btn-download:hover { 
+            background-color: #61c0d5; 
+            transform: translateY(-2px); 
+            box-shadow: 0 10px 25px rgba(97, 192, 213, 0.5);
+        }
+
+        .btn-design {
+            background-color: rgba(252, 163, 183, 0.85); 
+            box-shadow: 0 8px 20px rgba(252, 163, 183, 0.3);
+        }
+        .btn-design:hover { 
+            background-color: rgba(252, 163, 183, 1); 
+            transform: translateY(-2px); 
+            box-shadow: 0 10px 25px rgba(252, 163, 183, 0.5);
+        }
+
+        /* Modal Styles - Glassmorphism Update */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4); /* Darkened slightly to make the glass pop */
+            display: none; 
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            /* Glass Effect for Modal */
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+            
+            padding: 30px 40px;
+            border-radius: 25px;
+            text-align: center;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .modal-content h2 { 
+            margin-top: 0; 
+            color: #222; 
+            text-shadow: 0 2px 5px rgba(255,255,255,0.7);
+        }
+
+        .version-options {
+            display: flex;
+            gap: 25px;
+            justify-content: center;
+            margin: 25px 0;
+        }
+
+        /* Glass Version Buttons */
+        .version-btn {
+            width: 140px;
+            height: 140px;
+            /* Glass styling */
+            background: rgba(255, 255, 255, 0.4);
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            
+            border-radius: 15px;
+            cursor: pointer;
+            padding: 10px;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .version-btn:hover {
+            background: rgba(255, 255, 255, 0.7);
+            border-color: #61c0d5;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .version-btn img {
+            width: 100px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .version-btn span {
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+            text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+        }
+
+        .btn-close {
+            background-color: rgba(180, 180, 180, 0.8);
+            color: white;
+            padding: 10px 25px;
+            margin-top: 10px;
+        }
+        .btn-close:hover { 
+            background-color: rgba(150, 150, 150, 1); 
+            transform: scale(1.05); 
+        }
+
+    </style>
+</head>
+<body>
+
+    <input type="file" id="photoUpload" accept="image/*" style="display: none;">
+
+    <div class="id-card-wrapper" id="idCard">
+        <img src="bini id template 3.png" class="template-img" id="mainTemplateImg" alt="ID Template">
+        
+        <div class="user-photo-container" id="photoArea">
+            <div class="upload-hint" id="uploadHint">Tap to Upload Photo</div>
+            <img id="userPhoto" class="user-photo" alt="User Photo">
+        </div>
+
+        <input type="text" class="overlay-input" id="input-name" placeholder="BINI" maxlength="30" autocomplete="off">
+        <input type="text" class="overlay-input" id="input-nationality" placeholder="Filipino" maxlength="25" autocomplete="off">
+        <input type="text" class="overlay-input" id="input-place" placeholder="Philippines" maxlength="30" autocomplete="off">
+        <input type="text" class="overlay-input" id="input-signature" placeholder="Auto-Signature" tabindex="-1">
+    </div>
+
+    <div class="toolbar">
+        <div class="slider-group" id="sliderGroup">
+            <label>Left/Right: <input type="range" id="photoXPos" min="-200" max="200" value="0"></label>
+            <label>Up/Down: <input type="range" id="photoYPos" min="-200" max="200" value="0"></label>
+            <label>Size: <input type="range" id="photoScale" min="50" max="300" value="100"></label>
+        </div>
+        <div class="action-buttons">
+            <button class="btn btn-design" id="changeDesignBtn">Change Design</button>
+            <button class="btn btn-download" id="downloadBtn">Get Your ID</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="designModal">
+        <div class="modal-content">
+            <h2>Select ID Version</h2>
+            <div class="version-options">
+                
+                <button class="version-btn" data-version="1">
+                    <img src="bini id template 2.png" alt="Version 1 Preview">
+                    <span>MABUHAY!</span>
+                </button>
+                
+                <button class="version-btn" data-version="2">
+                    <img src="bini id template 3.png" alt="Version 2 Preview">
+                    <span>BINIchella</span>
+                </button>
+
+                <button class="version-btn" data-version="3">
+                    <img src="bini id template 4.png" alt="Version 3 Preview">
+                    <span>BINIcore</span>
+                </button>
+
+            </div>
+            <button class="btn btn-close" id="closeModalBtn">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Modal & Version Selector Logic ---
+        const designModal = document.getElementById('designModal');
+        const changeDesignBtn = document.getElementById('changeDesignBtn');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const versionBtns = document.querySelectorAll('.version-btn');
+        const mainTemplateImg = document.getElementById('mainTemplateImg');
+        const idCard = document.getElementById('idCard');
+
+        const templates = {
+            '1': 'bini id template 2.png',   
+            '2': 'bini id template 3.png',   
+            '3': 'bini id template 4.png'    
+        };
+
+        changeDesignBtn.addEventListener('click', () => {
+            designModal.style.display = 'flex';
+        });
+
+        closeModalBtn.addEventListener('click', () => {
+            designModal.style.display = 'none';
+        });
+
+        versionBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const version = btn.getAttribute('data-version');
+                
+                mainTemplateImg.src = templates[version];
+                
+                if (version === '2' || version === '3') {
+                    idCard.classList.add('white-text');
+                } else {
+                    idCard.classList.remove('white-text');
+                }
+                
+                designModal.style.display = 'none';
+            });
+        });
+
+        // --- Photo & Canvas Logic ---
+        const photoUpload = document.getElementById('photoUpload');
+        const photoArea = document.getElementById('photoArea');
+        const uploadHint = document.getElementById('uploadHint');
+        const userPhoto = document.getElementById('userPhoto');
+        const sliderGroup = document.getElementById('sliderGroup');
+
+        const photoXPosSlider = document.getElementById('photoXPos');
+        const photoYPosSlider = document.getElementById('photoYPos');
+        const photoScaleSlider = document.getElementById('photoScale');
+
+        const inputName = document.getElementById('input-name');
+        const inputSignature = document.getElementById('input-signature');
+        const downloadBtn = document.getElementById('downloadBtn');
+
+        function updatePhotoTransform() {
+            const x = photoXPosSlider.value;
+            const y = photoYPosSlider.value;
+            const scale = photoScaleSlider.value / 100;
+            userPhoto.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+        }
+
+        photoXPosSlider.addEventListener('input', updatePhotoTransform);
+        photoYPosSlider.addEventListener('input', updatePhotoTransform);
+        photoScaleSlider.addEventListener('input', updatePhotoTransform);
+
+        inputName.addEventListener('input', (e) => {
+            inputSignature.value = e.target.value; 
+        });
+
+        photoArea.addEventListener('click', () => {
+            photoUpload.click();
+        });
+
+        photoUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    userPhoto.src = event.target.result;
+                    userPhoto.style.display = 'block';
+                    uploadHint.style.display = 'none'; 
+                    sliderGroup.style.display = 'flex'; 
+                    
+                    photoXPosSlider.value = 0;
+                    photoYPosSlider.value = 0;
+                    photoScaleSlider.value = 100;
+                    updatePhotoTransform();
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        downloadBtn.addEventListener('click', () => {
+            const inputs = idCard.querySelectorAll('.overlay-input');
+            const tempDivs = [];
+            
+            inputs.forEach(input => {
+                const div = document.createElement('div');
+                div.textContent = input.value;       
+                div.className = input.className;     
+                div.style.whiteSpace = 'nowrap';     
+                
+                const originalId = input.id;
+                div.id = originalId;
+                input.removeAttribute('id');
+                
+                input.parentNode.insertBefore(div, input);
+                input.style.display = 'none'; 
+                
+                tempDivs.push({ realInput: input, fakeDiv: div, id: originalId });
+            });
+
+            idCard.classList.add('capturing');
+            
+            html2canvas(idCard, {
+                scale: 2, 
+                backgroundColor: null,
+                allowTaint: true,
+                useCORS: true
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'BINIdentity.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                
+                idCard.classList.remove('capturing');
+
+                tempDivs.forEach(item => {
+                    item.realInput.id = item.id;           
+                    item.realInput.style.display = '';     
+                    item.fakeDiv.remove();                 
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>
